@@ -2,7 +2,7 @@
 name: demo-video
 description: Record a scripted screen video of a website or web app, either a short clip of one feature for a release or page, or a chaptered walkthrough, with a drawn pointer, zooms, a cover, chapter cards and burned-in captions. Use when making, re-recording or fixing a demo, feature clip or walkthrough video, and when someone gives feedback on one (the feedback becomes a lesson in this skill).
 license: MIT
-compatibility: Linux with Xvfb, ffmpeg (x11grab and libass), Node 18+, Playwright Chromium and ImageMagick.
+compatibility: Linux with Xvfb, ffmpeg (x11grab and libass), Node 20+, Playwright Chromium and ImageMagick.
 ---
 
 # Demo video

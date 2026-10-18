@@ -16,8 +16,17 @@ const dir = join(out, 'sheets');
 mkdirSync(dir, { recursive: true });
 
 const frame = (t, file, width = 640) => execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-ss', t.toFixed(2), '-i', video, '-frames:v', '1', '-vf', `scale=${width}:-1`, file]);
+// ImageMagick 7 runs `magick montage`; 6 (Debian and Ubuntu up to 24.04) has only `montage`.
+const montageCmd = (() => {
+    try {
+        execFileSync('magick', ['-version'], { stdio: 'ignore' });
+        return ['magick', 'montage'];
+    } catch {
+        return ['montage'];
+    }
+})();
 const montage = (files, sheet, tile = '3x') =>
-    execFileSync('magick', ['montage', ...files, '-tile', tile, '-geometry', '+3+3', join(dir, `${sheet}.png`)]);
+    execFileSync(montageCmd[0], [...montageCmd.slice(1), ...files, '-tile', tile, '-geometry', '+3+3', join(dir, `${sheet}.png`)]);
 const seconds = (s) => {
     const [h, m, rest] = s.replace(',', '.').split(':').map(Number);
     return h * 3600 + m * 60 + rest;

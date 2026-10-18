@@ -21,7 +21,8 @@ pkg() { # pkg <arch> <debian> <fedora>
 
 [ "$(uname -s)" = Linux ] && ok "Linux" || no "Linux" "Capture uses Xvfb and x11grab, which need Linux (WSL2 untested)."
 
-if command -v node >/dev/null && [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 18 ]; then ok "node $(node -v)"; else no "node 18+" "https://nodejs.org or your version manager"; fi
+# Playwright needs Node 20+; Debian and Ubuntu apt ship older, so point past apt.
+if command -v node >/dev/null && [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 20 ]; then ok "node $(node -v)"; else no "node 20+ (Playwright needs it)" "install from https://nodejs.org or a version manager (nvm, fnm, mise); distro packages are often older"; fi
 
 if command -v ffmpeg >/dev/null; then
   # Read the lists whole: grep -q exiting early would SIGPIPE ffmpeg and fail the pipe.
@@ -41,11 +42,14 @@ command -v xdotool >/dev/null && ok "xdotool (optional: acceptBrowserPrompt)" ||
 
 if node -e "require.resolve('playwright')" 2>/dev/null || node -e "require.resolve('@playwright/test')" 2>/dev/null; then
   ok "playwright (from $(pwd))"
-  if node -e "const {chromium}=require(require.resolve('playwright',{paths:[process.cwd()]}));require('fs').accessSync(chromium.executablePath())" 2>/dev/null \
-     || node -e "const {chromium}=require(require.resolve('@playwright/test',{paths:[process.cwd()]}));require('fs').accessSync(chromium.executablePath())" 2>/dev/null; then
-    ok "chromium for playwright"
+  # Launch it, not just find it: a downloaded browser can still lack system libraries.
+  # channel 'chromium' starts the full browser the takes use, not the headless shell.
+  launch="const m=require(require.resolve(process.argv[1],{paths:[process.cwd()]}));m.chromium.launch({channel:'chromium',timeout:30000}).then(b=>b.close(),e=>{console.error(e.message.split('\n')[0]);process.exit(1)})"
+  pw=playwright; node -e "require.resolve('playwright')" 2>/dev/null || pw=@playwright/test
+  if chromium_err=$(node -e "$launch" "$pw" 2>&1); then
+    ok "chromium for playwright (launches)"
   else
-    no "chromium for playwright" "npx playwright install chromium   (on Debian/Ubuntu: npx playwright install --with-deps chromium)"
+    no "chromium for playwright: ${chromium_err##*$'\n'}" "$(case " $ID $family " in *" debian "*|*" ubuntu "*) echo "npx playwright install --with-deps chromium   (adds the system libraries it needs; asks for sudo)" ;; *) echo "npx playwright install chromium, then install the system libraries named in the error" ;; esac)"
   fi
 else
   no "playwright in $(pwd)" "npm init -y && npm i -D playwright && npx playwright install chromium"
