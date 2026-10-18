@@ -1,0 +1,15 @@
+{
+  "name": "omar-the-junior",
+  "description": "Omar Masoud's agent skills.",
+  "owner": {
+    "name": "Omar Masoud",
+    "url": "https://github.com/omar-the-junior"
+  },
+  "plugins": [
+    {
+      "name": "omar-skills",
+      "description": "Agent skills by Omar Masoud: demo-video records scripted screen videos of web apps.",
+      "source": "./"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "title": "Dark mode",
+  "cover": { "title": "Dark mode", "subtitle": "New in 2.4: one switch in Settings" },
+  "shown": "Settings, the Dark mode switch, the page turning dark.",
+  "leftOut": "The per-device setting; it behaves the same."
+}

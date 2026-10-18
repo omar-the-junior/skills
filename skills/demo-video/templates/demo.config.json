@@ -1,0 +1,8 @@
+{
+  "baseUrl": "http://localhost:3000/",
+  "lang": "en",
+  "rtl": false,
+  "font": { "file": null, "name": "Cairo" },
+  "brand": { "background": "#111418", "text": "#f2f2f0", "muted": "#8a8a86", "accent": "#3b82f6" },
+  "labels": { "part": "Part {n} of {total}" }
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Buying a course",
+  "cover": { "title": "Buying a course", "subtitle": "From the catalogue to the first lesson" },
+  "chapters": [
+    { "title": "Find a course", "subtitle": "Browse the catalogue and open a course" },
+    { "title": "Pay", "subtitle": "Checkout in test mode" }
+  ],
+  "shown": "The catalogue, a course page, checkout, the first lesson.",
+  "leftOut": "Refunds and coupons; the tests cover them."
+}

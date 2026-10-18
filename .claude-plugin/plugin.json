@@ -1,0 +1,11 @@
+{
+  "name": "omar-skills",
+  "version": "0.1.0",
+  "description": "Agent skills by Omar Masoud: demo-video records scripted screen videos of web apps.",
+  "author": {
+    "name": "Omar Masoud",
+    "url": "https://github.com/omar-the-junior"
+  },
+  "repository": "https://github.com/omar-the-junior/skills",
+  "license": "MIT"
+}
