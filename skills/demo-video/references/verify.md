@@ -9,6 +9,6 @@ Every check is done by looking at images, never by trusting that the script pass
 5. **Cards** (`5-cards.png`). Each card is fully drawn, numbered in order, with no pointer on it.
 6. **Browser chrome** (the timeline sheets). Top-right and bottom-left corners on every frame: no translate bar, no link-preview URL, no tab strip, no scrollbar.
 7. **Smoothness**, on one typing or zoom stretch: `scripts/frame-gaps.sh <video-dir>/out/<name>.mp4 START END` from the skill folder. Expect close to 30 changed frames a second while typing, and no freeze over 0.2 s the script did not hold on purpose.
-8. **Length, size and format**, from `finish.mjs`'s output: 1280x830 with captions (1280x720 without), 30 fps. A clip for GitHub stays under 10 MB, the attachment limit in free-plan repositories.
+8. **Length, size and format**, from `finish.mjs`'s output: 1280x830 with captions (1280x720 without), 30 fps, and within any size limit the person named.
 
 A defect is fixed in the script or the kit, then the whole take is re-recorded and these checks run again.

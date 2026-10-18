@@ -3,7 +3,7 @@
 // a band under the page so they never cover the UI, then writes the poster
 // (frame 0) beside the video.
 //
-// usage: node finish.mjs <video-dir> [--no-captions]
+// usage: node finish.mjs <video-dir> [--no-captions] [--max-mb <n>]
 // writes: out/<name>.mp4, out/<name>.<lang>.srt, out/<name>.poster.png
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
@@ -12,8 +12,6 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.mjs';
 
 const BAND = 110;
-/** Free-plan GitHub repositories refuse attached videos over 10 MB. */
-const GITHUB_FREE_LIMIT = 10 * 1024 * 1024;
 
 /** Marks and cuts moved into final-video time. */
 export function timeline(recording) {
@@ -77,6 +75,7 @@ function main() {
     const args = process.argv.slice(2);
     const videoDir = resolve(args.find((a) => !a.startsWith('--')) ?? '.');
     const withCaptions = !args.includes('--no-captions') && existsSync(join(videoDir, 'cues.json'));
+    const maxMb = args.includes('--max-mb') ? Number(args[args.indexOf('--max-mb') + 1]) : null;
     const name = basename(videoDir);
     const out = join(videoDir, 'out');
     const config = loadConfig(videoDir);
@@ -114,10 +113,11 @@ function main() {
     const duration = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', video], { encoding: 'utf8' }));
     const size = statSync(video).size;
     console.log(`${name}.mp4: ${duration.toFixed(1)} s, ${(size / 1048576).toFixed(1)} MB; ${count} cues; ${cuts.length} cuts, ${removedBefore(1e9).toFixed(1)} s removed`);
-    if (size > GITHUB_FREE_LIMIT) {
-        console.log('over 10 MB: GitHub refuses it as an attachment in free-plan repositories');
-    }
     console.log([video, srtPath, poster].filter(Boolean).join('\n'));
+    if (maxMb && size > maxMb * 1048576) {
+        console.error(`over the ${maxMb} MB limit: shorten the take or cut more`);
+        process.exit(1);
+    }
 }
 
 if (realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])) {

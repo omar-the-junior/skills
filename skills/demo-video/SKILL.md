@@ -2,7 +2,7 @@
 name: demo-video
 description: Record a scripted screen video of a website or web app, either a short clip of one feature for a release or page, or a chaptered walkthrough, with a drawn pointer, zooms, a cover, chapter cards and burned-in captions. Use when making, re-recording or fixing a demo, feature clip or walkthrough video, and when someone gives feedback on one (the feedback becomes a lesson in this skill).
 license: MIT
-compatibility: Linux with Xvfb, ffmpeg (x11grab and libass), Node 18+, Playwright Chromium and ImageMagick. Written for Claude Code.
+compatibility: Linux with Xvfb, ffmpeg (x11grab and libass), Node 18+, Playwright Chromium and ImageMagick.
 ---
 
 # Demo video
@@ -14,11 +14,11 @@ A demo video is a Playwright script driving the **real** site in a real browser 
 - **Clean frame**: nothing on screen belongs to the recording machine (browser chrome, popups, link previews, a half-loaded page, a login form left over from a cut).
 - **Cover**: frame 0 is a finished picture, because frame 0 is the thumbnail every app shows. The video starts at the script's first mark.
 
-The kit is in `${CLAUDE_SKILL_DIR}/scripts/`. Each file's header says what it does and how to call it; `recorder.mjs` documents every helper the script uses.
+Paths in this file are relative to this skill's folder; run the scripts by their full path from the folder that holds the videos. The kit is in `scripts/`. Each file's header says what it does and how to call it; `recorder.mjs` documents every helper the script uses.
 
 ## Steps
 
-1. **Check the machine.** In the folder that will hold the videos (usually `demo-videos/` in the project), run `${CLAUDE_SKILL_DIR}/scripts/doctor.sh`. Installing system packages needs sudo, so hand the printed install lines to the person.
+1. **Check the machine.** In the folder that will hold the videos (usually `demo-videos/` in the project), run `scripts/doctor.sh`. Installing system packages needs sudo, so hand the printed install lines to the person.
    Done when it prints `ready`.
 
 2. **Read [`references/lessons.md`](references/lessons.md).** Done when each lesson is applied in this video's plan or named as not applying.
@@ -30,7 +30,7 @@ The kit is in `${CLAUDE_SKILL_DIR}/scripts/`. Each file's header says what it do
    List the claims the video must show and map each to one on-screen moment. Show the feature as a user meets it: fixes made along the way that a user never acts on (a warning, a recovery path, an edge case) stay out; the tests carry them. Data is seeded fake accounts only.
    Done when each claim maps to one moment, and the person has agreed the list when the scope was theirs to set.
 
-4. **Set up the video folder.** Copy `${CLAUDE_SKILL_DIR}/templates/demo.config.json` into the videos folder once (base URL, caption language and direction, brand colours, font) and `templates/clip/` or `templates/walkthrough/` to `demo-videos/<name>/`. Fill `video.json`: the cover's title and line, the chapters, and what is shown and left out.
+4. **Set up the video folder.** Copy `templates/demo.config.json` into the videos folder once (base URL, caption language and direction, brand colours, font) and `templates/clip/` or `templates/walkthrough/` to `demo-videos/<name>/`. Fill `video.json`: the cover's title and line, the chapters, and what is shown and left out.
    Done when the cover text says what the video shows in a few words.
 
 5. **Write the script** in `<name>/script.mjs`, through the recorder's helpers: `cover`, `chapter`, `go` (the first page and a chapter's resume only), `navigate`, `clickOn`, `typeInto`, `upload`, `scrollTo`, `wheel`, `zoomOn`/`unzoom`, `offCamera` for logins and seeding, `mark` for every caption. Rules the helpers cannot enforce:
@@ -40,16 +40,17 @@ The kit is in `${CLAUDE_SKILL_DIR}/scripts/`. Each file's header says what it do
 
    Done when the script has no `page.goto` on camera outside `go`, and every claim has a `verify` or a visible on-screen proof.
 
-6. **Capture.** Reset the seeded data, then `${CLAUDE_SKILL_DIR}/scripts/run.sh demo-videos/<name>/script.mjs`. [`references/capture.md`](references/capture.md) explains what the recorder does and why, for when a take misbehaves.
+6. **Capture.** Reset the seeded data, then `scripts/run.sh demo-videos/<name>/script.mjs`. [`references/capture.md`](references/capture.md) explains what the recorder does and why, for when a take misbehaves.
    Done when the run exits 0 with every check passing.
 
-7. **Finish.** `node ${CLAUDE_SKILL_DIR}/scripts/finish.mjs demo-videos/<name>` cuts, captions, burns and writes the poster; caption rules are in [`references/captions.md`](references/captions.md).
+7. **Finish.** `node scripts/finish.mjs demo-videos/<name>` cuts, captions, burns and writes the poster; caption rules are in [`references/captions.md`](references/captions.md).
+   When the person names where the video goes and that place caps file size (a GitHub attachment, a CMS upload), add `--max-mb <n>`: it then fails over the cap.
    Done when it prints the length, size and cue count, with the cue count matching `cues.json`.
 
-8. **Verify the frames** with `node ${CLAUDE_SKILL_DIR}/scripts/sheets.mjs demo-videos/<name>`, then every check in [`references/verify.md`](references/verify.md). Look at the images: a passing script proves nothing about what the viewer sees.
+8. **Verify the frames** with `node scripts/sheets.mjs demo-videos/<name>`, then every check in [`references/verify.md`](references/verify.md). Look at the images: a passing script proves nothing about what the viewer sees.
    Done when every check has been looked at, and each defect is fixed by a new take, never by editing the video around it.
 
-9. **Hand off.** `node ${CLAUDE_SKILL_DIR}/scripts/review-sheet.mjs demo-videos/<name>` writes `out/<name>.review.md`: length, what is shown and left out, every caption, the checks the take proved. The person approves the cover, card and caption text before the video goes to anyone else. Deliver `<name>.mp4`, its `.srt` and `<name>.poster.png`.
+9. **Hand off.** `node scripts/review-sheet.mjs demo-videos/<name>` writes `out/<name>.review.md`: length, what is shown and left out, every caption, the checks the take proved. The person approves the cover, card and caption text before the video goes to anyone else. Deliver `<name>.mp4`, its `.srt` and `<name>.poster.png`.
    Done when the review sheet matches the final video and the person has it.
 
 ## Lessons
