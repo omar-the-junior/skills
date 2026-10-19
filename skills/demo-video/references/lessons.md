@@ -2,6 +2,7 @@
 
 One line per lesson: the date, what went wrong, and where the rule now lives. Newest first. The rule itself lives in that place, not here.
 
+- 2026-10-19 · On a zoomed Arabic hint the pointer waited at the left end of the line, where the text ends, not where it starts. → recorder.mjs `zoomOn` (`text: true` aims at the right edge when `rtl`).
 - 2026-10-19 · doctor.sh told a new videos folder to install the latest Playwright, which downloaded a second Chromium build (about 680 MB) while the project's own Playwright and its build were already on disk. → playwright.mjs (reuses a Playwright whose build is cached; `playwrightFrom`), doctor.sh (prints the pinned version), SKILL.md step 1.
 - 2026-10-18 · Every delivered video opened on about 0.9 s of magenta (the crop-measurement page), then black, so chat apps showed a pink thumbnail. → recorder.mjs (lead-in cut to the first mark, `cover()`, cards marked once drawn), finish.mjs (refuses a magenta frame 0), verify.md 1.
 - 2026-10-16 · Caption lines starting with an English word laid out left to right even with `Encoding=-1`. → captions.md "Right-to-left captions" (U+200F on every line, in finish.mjs).

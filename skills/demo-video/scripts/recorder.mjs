@@ -359,9 +359,14 @@ export class Recorder {
         );
         await this.page.waitForTimeout(900);
         const zoomed = await measure();
-        // Beside a short text the pointer would cover its words, so it waits just before them.
-        const px = text ? zoomed.x - 26 : zoomed.x + zoomed.width * 0.15;
-        await this.moveTo(px, zoomed.y + zoomed.height / 2, 500);
+        // Beside a text the pointer would cover its words, so it waits just before
+        // the first line: at its left edge, or its right edge in a right-to-left language.
+        if (text) {
+            const px = this.config.rtl ? zoomed.x + zoomed.width + 14 : zoomed.x - 26;
+            await this.moveTo(px, zoomed.y + Math.min(zoomed.height / 2, 16), 500);
+        } else {
+            await this.moveTo(zoomed.x + zoomed.width * 0.15, zoomed.y + zoomed.height / 2, 500);
+        }
     }
     async unzoom() {
         await this.page.evaluate(() => {
