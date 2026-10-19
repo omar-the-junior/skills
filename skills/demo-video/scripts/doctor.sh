@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks everything a take needs and prints the install line for each missing
 # piece. Run it from the folder that holds your videos (Playwright is looked up
-# there). Exit 0 when ready, 1 when something is missing.
+# from there; see playwright.mjs). Exit 0 when ready, 1 when something is missing.
 # usage: doctor.sh
 set -uo pipefail
 missing=0
@@ -40,19 +40,30 @@ command -v xauth >/dev/null && ok "xauth" || no "xauth (xvfb-run needs it)" "$(p
 { command -v magick >/dev/null || command -v montage >/dev/null; } && ok "ImageMagick" || no "ImageMagick (contact sheets)" "$(pkg imagemagick imagemagick ImageMagick)"
 command -v xdotool >/dev/null && ok "xdotool (optional: acceptBrowserPrompt)" || printf '  --    xdotool not found; only acceptBrowserPrompt() needs it: %s\n' "$(pkg xdotool xdotool xdotool)"
 
-if node -e "require.resolve('playwright')" 2>/dev/null || node -e "require.resolve('@playwright/test')" 2>/dev/null; then
-  ok "playwright (from $(pwd))"
-  # Launch it, not just find it: a downloaded browser can still lack system libraries.
-  # channel 'chromium' starts the full browser the takes use, not the headless shell.
-  launch="const m=require(require.resolve(process.argv[1],{paths:[process.cwd()]}));m.chromium.launch({channel:'chromium',timeout:30000}).then(b=>b.close(),e=>{console.error(e.message.split('\n')[0]);process.exit(1)})"
-  pw=playwright; node -e "require.resolve('playwright')" 2>/dev/null || pw=@playwright/test
-  if chromium_err=$(node -e "$launch" "$pw" 2>&1); then
-    ok "chromium for playwright (launches)"
+# Which Playwright the takes would use: playwright.mjs's header gives the search
+# order. A Playwright already on the machine with its Chromium downloaded is
+# reused, so a new videos folder never downloads a second browser build.
+KIT=$(cd "$(dirname "$0")" && pwd)
+if where=$(node "$KIT/playwright.mjs" where 2>&1); then
+  mapfile -t pw <<<"$where"
+  ok "${pw[2]}"
+  [ -n "${pw[3]:-}" ] && printf '  --    %s\n' "${pw[3]}"
+  if [ "${pw[1]}" = missing ]; then
+    no "chromium for playwright (not downloaded)" "$(node "$KIT/playwright.mjs" advise)"
   else
-    no "chromium for playwright: ${chromium_err##*$'\n'}" "$(case " $ID $family " in *" debian "*|*" ubuntu "*) echo "npx playwright install --with-deps chromium   (adds the system libraries it needs; asks for sudo)" ;; *) echo "npx playwright install chromium, then install the system libraries named in the error" ;; esac)"
+    # Launch it, not just find it: a downloaded browser can still lack system libraries.
+    # channel 'chromium' starts the full browser the takes use, not the headless shell.
+    launch="require(process.argv[1]).chromium.launch({channel:'chromium',timeout:30000}).then(b=>b.close(),e=>{console.error(e.message.split('\n')[0]);process.exit(1)})"
+    if chromium_err=$(node -e "$launch" "${pw[0]}" 2>&1); then
+      ok "chromium for playwright (launches)"
+    else
+      no "chromium for playwright: ${chromium_err##*$'\n'}" "$(case " $ID $family " in *" debian "*|*" ubuntu "*) echo "node ${pw[4]}/cli.js install-deps chromium   (adds the system libraries it needs; asks for sudo)" ;; *) echo "install the system libraries named in the error" ;; esac)"
+    fi
   fi
+elif [ -z "$where" ]; then
+  no "playwright (none found here or on this machine with Chromium downloaded)" "$(node "$KIT/playwright.mjs" advise)"
 else
-  no "playwright in $(pwd)" "npm init -y && npm i -D playwright && npx playwright install chromium"
+  no "playwright: $where" "fix playwrightFrom in demo.config.json, or DEMO_PLAYWRIGHT_FROM"
 fi
 
 [ $missing = 0 ] && echo "ready" || echo "missing pieces above"

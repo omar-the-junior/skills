@@ -44,6 +44,9 @@ export function loadConfig(videoDir) {
     // (Latin and Arabic) is used on the cards and in the captions.
     config.fontFile = config.font.file ? resolve(dirname(found), config.font.file) : join(KIT, 'assets/fonts/Cairo.ttf');
     config.fontName = config.font.file ? config.font.name : 'Cairo';
+    // A folder whose Playwright the takes use (its own node_modules or a parent's),
+    // relative to demo.config.json. Unset, playwright.mjs searches; see its header.
+    config.playwrightFrom = raw.playwrightFrom ? resolve(dirname(found), raw.playwrightFrom) : null;
     config.configPath = found;
     return config;
 }

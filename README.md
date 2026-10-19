@@ -58,7 +58,7 @@ Linux, with:
 - Xvfb, `xvfb-run` and `xauth`
 - ffmpeg built with x11grab and libass (distro packages are)
 - Node 20+ (Debian and Ubuntu apt packages are older; use nodejs.org or a version manager)
-- Playwright's Chromium, installed in the folder that holds your videos: `npm i -D playwright && npx playwright install chromium` (on Debian, Ubuntu and their derivatives, `install --with-deps chromium` also adds the system libraries Chromium needs)
+- Playwright with its Chromium. Any Playwright already on the machine with its browser downloaded is reused (the project's own, one beside the videos folder, or one in Playwright's cache registry), so most projects install nothing; otherwise doctor.sh prints the install line, pinned to a version whose browser is already cached when there is one
 - ImageMagick, for the contact sheets
 - xdotool, only if a video has to accept a browser permission prompt
 

@@ -19,6 +19,7 @@ Paths in this file are relative to this skill's folder; run the scripts by their
 ## Steps
 
 1. **Check the machine.** In the folder that will hold the videos (usually `demo-videos/` in the project), run `scripts/doctor.sh`. Installing system packages needs sudo, so hand the printed install lines to the person.
+   Never install Playwright by hand: each version is pinned to one Chromium build, so "latest" downloads a new build (about 680 MB) beside the cached one. A new videos folder needs no install when any Playwright on the machine has its Chromium downloaded: the takes reuse the project's own (the folder or its parents), one beside the videos folder, or one registered in `~/.cache/ms-playwright/.links`, and doctor names which. To choose one, set `playwrightFrom` in `demo.config.json` to a folder whose `node_modules` holds it (or `DEMO_PLAYWRIGHT_FROM` for one run). Install only the line doctor prints: it pins the version whose build is already downloaded. `scripts/playwright.mjs` holds the search order.
    Done when it prints `ready`.
 
 2. **Read [`references/lessons.md`](references/lessons.md).** Done when each lesson is applied in this video's plan or named as not applying.

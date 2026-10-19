@@ -11,10 +11,10 @@
 // it (browser start, crop measurement) is cut.
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { loadConfig } from './config.mjs';
+import { advise, findPlaywright } from './playwright.mjs';
 
 const W = 1280;
 const H = 720;
@@ -31,22 +31,18 @@ export function verify(name, ok, detail = '') {
     }
 }
 
-/** Playwright from the folder the take runs in, the video folder, or the kit itself. */
-async function loadChromium(videoDir) {
-    const kit = dirname(fileURLToPath(import.meta.url));
-    for (const base of [process.cwd(), videoDir, kit]) {
-        for (const name of ['playwright', 'playwright-core', '@playwright/test']) {
-            try {
-                const path = createRequire(join(base, 'noop.js')).resolve(name);
-                const mod = await import(pathToFileURL(path).href);
-                const chromium = mod.chromium ?? mod.default?.chromium;
-                if (chromium) {
-                    return chromium;
-                }
-            } catch {}
-        }
+/** Chromium from the Playwright findPlaywright picks (playwrightFrom, this folder, the kit, then one already on the machine). */
+async function loadChromium(videoDir, config) {
+    const pw = findPlaywright(videoDir, config);
+    if (!pw) {
+        throw new Error(`Playwright not found. Run scripts/doctor.sh in the videos folder; it prints what to install. ${advise(videoDir, config)}`);
     }
-    throw new Error('Playwright not found. In the folder that holds your videos run: npm i -D playwright && npx playwright install chromium');
+    const mod = await import(pathToFileURL(pw.entry).href);
+    const chromium = mod.chromium ?? mod.default?.chromium;
+    if (!chromium) {
+        throw new Error(`${pw.entry} has no chromium export.`);
+    }
+    return chromium;
 }
 
 /** A drawn pointer and click ripple: the filmed screen has no cursor of its own. */
@@ -140,7 +136,7 @@ async function start(videoDir) {
     const config = loadConfig(videoDir);
     const out = join(videoDir, 'out');
     mkdirSync(out, { recursive: true });
-    const chromium = await loadChromium(videoDir);
+    const chromium = await loadChromium(videoDir, config);
     // Wayland, desktop-scale and D-Bus variables are dropped: Chromium opens on
     // Xvfb at scale 1, never on the real desktop, and system dialogs stay on Xvfb.
     const { WAYLAND_DISPLAY, GDK_SCALE, OZONE_PLATFORM, ELECTRON_OZONE_PLATFORM_HINT, DBUS_SESSION_BUS_ADDRESS, ...env } = process.env;
