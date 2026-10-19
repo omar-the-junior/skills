@@ -28,7 +28,7 @@ Paths in this file are relative to this skill's folder; run the scripts by their
    - a **clip**: one feature, 10 to 40 s, for a release note, a changelog or a page on the site. Cover, the page, the action, the result.
    - a **walkthrough**: a whole flow in 3 to 6 chapters, one idea each.
 
-   List the claims the video must show and map each to one on-screen moment. Show the feature as a user meets it: fixes made along the way that a user never acts on (a warning, a recovery path, an edge case) stay out; the tests carry them. Data is seeded fake accounts only.
+   List the claims the video must show and map each to one on-screen moment. Show the feature as a user meets it: fixes made along the way that a user never acts on (a warning, a recovery path, an edge case) stay out; the tests carry them. A setting made per item (per lesson, per product, per user) is shown with its contrast: one item set and one left as it is, on the admin side and where the result shows, or the viewer cannot tell it is a choice. Data is seeded fake accounts only.
    Done when each claim maps to one moment, and the person has agreed the list when the scope was theirs to set.
 
 4. **Set up the video folder.** Copy `templates/demo.config.json` into the videos folder once (base URL, caption language and direction, brand colours, font) and `templates/clip/` or `templates/walkthrough/` to `demo-videos/<name>/`. Fill `video.json`: the cover's title and line, the chapters, and what is shown and left out.
