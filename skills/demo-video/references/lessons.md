@@ -2,6 +2,8 @@
 
 One line per lesson: the date, what went wrong, and where the rule now lives. Newest first. The rule itself lives in that place, not here.
 
+- 2026-10-20 · A walkthrough was about to be filmed on seed data with no source PDFs, so every PDF panel would have said "failed to load". → SKILL.md step 3 (every panel shown must load; generate sample files).
+- 2026-10-20 · A decision moved the page to the next entry while its caption still described the decision. → script practice: reopen the decided item so the result shows under its caption (f21-recheck `showDecided`).
 - 2026-10-20 · A per-Concept free-preview tick was shown on one Concept only, so the viewer could not tell it was a choice made per Concept. → SKILL.md step 3 (show a per-item setting with its contrast).
 - 2026-10-19 · On a zoomed Arabic hint the pointer waited at the left end of the line, where the text ends, not where it starts. → recorder.mjs `zoomOn` (`text: true` aims at the right edge when `rtl`).
 - 2026-10-19 · doctor.sh told a new videos folder to install the latest Playwright, which downloaded a second Chromium build (about 680 MB) while the project's own Playwright and its build were already on disk. → playwright.mjs (reuses a Playwright whose build is cached; `playwrightFrom`), doctor.sh (prints the pinned version), SKILL.md step 1.
