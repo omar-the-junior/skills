@@ -38,6 +38,7 @@ Paths in this file are relative to this skill's folder; run the scripts by their
    - Zoom only on something narrower than about two thirds of the screen, and only while no fixed sidebar or sticky header is on screen: the zoom scales the whole page, so a fixed layer floats over it and a full-width row loses its ends. Walk the pointer across those instead.
    - Every claim a caption makes that the server must make true (a saved price, a refused request) is checked with `r.verify` at that moment.
    - Caption text lives in `cues.json` keyed by mark; hold at least 3.2 s after a mark so its caption gets 2.5 s on screen.
+   - When a video uses more than one account, every login cut is preceded by a card naming the account and its email (`r.showCard({ label, title, subtitle }, 'quiet-account-<n>')`), and the next caption says whose account it is. The login itself is cut, so without the card the viewer cannot tell a different person took the next step.
 
    Done when the script has no `page.goto` on camera outside `go`, and every claim has a `verify` or a visible on-screen proof.
 
