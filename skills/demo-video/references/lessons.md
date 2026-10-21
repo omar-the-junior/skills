@@ -2,6 +2,7 @@
 
 One line per lesson: the date, what went wrong, and where the rule now lives. Newest first. The rule itself lives in that place, not here.
 
+- 2026-10-21 · The account card from step 5, called as written there (two arguments), crashed the take: `showCard` had no default hold. → recorder.mjs (`showCard` holds 3.4 s by default, as a chapter card does).
 - 2026-10-20 · Reviewer and supervisor steps alternated across cut logins, and the viewer could not tell a supervisor account took the supervisor's steps. → SKILL.md step 5 (an account card before every login cut, and captions name the account).
 - 2026-10-20 · A walkthrough was about to be filmed on seed data with no source PDFs, so every PDF panel would have said "failed to load". → SKILL.md step 3 (every panel shown must load; generate sample files).
 - 2026-10-20 · A decision moved the page to the next entry while its caption still described the decision. → script practice: reopen the decided item so the result shows under its caption (f21-recheck `showDecided`).

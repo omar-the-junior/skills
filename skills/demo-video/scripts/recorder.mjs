@@ -426,7 +426,7 @@ export class Recorder {
         await this.page.waitForTimeout(600);
     }
 
-    async showCard(card, key, holdMs) {
+    async showCard(card, key, holdMs = 3400) {
         this.context.__nextCard = cardPage(this.config, card);
         await this.cardPage.goto(`http://demo.invalid/__demo-card/${key}`);
         await this.cardPage.evaluate(() => document.fonts.ready);
