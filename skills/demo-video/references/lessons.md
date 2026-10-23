@@ -2,6 +2,15 @@
 
 One line per lesson: the date, what went wrong, and where the rule now lives. Newest first. The rule itself lives in that place, not here.
 
+- 2026-10-23 · A sign-in cut before the cover overlapped the lead-in cut, and both were subtracted, so every caption ran about 4 s early. → finish.mjs `timeline` (merges overlapping cuts), capture.md "Accounts and real data".
+- 2026-10-23 · A staging take spent most of its session on identical 401s: the wrong one of two admin accounts, then a dotenv value sent with its quotes. → login.mjs (`accounts` in demo.config.json, `readSecret`), preflight.mjs via run.sh, SKILL.md step 6 (ask which account the person uses).
+- 2026-10-23 · Locators were found by failed takes and hand-written probe scripts, about 15 browser runs. → probe.mjs, SKILL.md step 5 ("Probe before writing").
+- 2026-10-23 · A text locator with `.last()` pointed at a filter chip, not the status badge with the same label. → SKILL.md step 5 (one-match locators, from the probe).
+- 2026-10-23 · Chapter cards held 6 to 10 s while the next page loaded behind them on camera. → recorder.mjs `chapter(n, { open })` (load cut behind the card), captions.md.
+- 2026-10-23 · The previous caption showed on a rising chapter card. → recorder.mjs `showCard` (`quiet-before-<key>`), captions.md.
+- 2026-10-23 · A caption described a source file too small to read at 1280x720. → SKILL.md step 5, verify.md 2.
+- 2026-10-23 · A read-only staging take guarded writes with a hand-written request watcher. → recorder.mjs `readOnly()` (blocks writes, fails the take), SKILL.md steps 3 and 5.
+
 - 2026-10-21 · The account card from step 5, called as written there (two arguments), crashed the take: `showCard` had no default hold. → recorder.mjs (`showCard` holds 3.4 s by default, as a chapter card does).
 - 2026-10-20 · Reviewer and supervisor steps alternated across cut logins, and the viewer could not tell a supervisor account took the supervisor's steps. → SKILL.md step 5 (an account card before every login cut, and captions name the account).
 - 2026-10-20 · A walkthrough was about to be filmed on seed data with no source PDFs, so every PDF panel would have said "failed to load". → SKILL.md step 3 (every panel shown must load; generate sample files).

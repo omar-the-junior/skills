@@ -16,7 +16,20 @@ const BAND = 110;
 /** Marks and cuts moved into final-video time. */
 export function timeline(recording) {
     const offset = recording.offset ?? 0.1;
-    const cuts = (recording.cuts ?? []).map((cut) => ({ from: Math.max(0, cut.from - offset), to: Math.max(0, cut.to - offset) }));
+    // Cuts can overlap (a sign-in cut inside the lead-in before the first mark);
+    // merged, so no stretch is subtracted twice and the captions stay in sync.
+    const cuts = (recording.cuts ?? [])
+        .map((cut) => ({ from: Math.max(0, cut.from - offset), to: Math.max(0, cut.to - offset) }))
+        .sort((a, b) => a.from - b.from)
+        .reduce((merged, cut) => {
+            const last = merged.at(-1);
+            if (last && cut.from <= last.to) {
+                last.to = Math.max(last.to, cut.to);
+            } else {
+                merged.push({ ...cut });
+            }
+            return merged;
+        }, []);
     // A time inside a cut lands where the cut is joined.
     const removedBefore = (t) => cuts.reduce((sum, cut) => sum + Math.max(0, Math.min(t, cut.to) - cut.from), 0);
     const final = (t) => {

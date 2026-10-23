@@ -26,6 +26,15 @@ The video starts about 0.1 s after ffmpeg is spawned; `marks.json` records that 
 - **Pointer.** Drawn by an init script (`position: fixed`, `pointer-events: none`, top z-index) with a ripple on `mousedown` in the brand accent; hidden on cards.
 - **Browser permission bubbles** ("Allow", "Save changes") are browser UI, not page DOM. `acceptBrowserPrompt()` finds the filled button by colour and clicks it with xdotool, only inside `offCamera`.
 
+## Accounts and real data
+
+- **Sign-in** (`login.mjs`) starts signed out (cookies, local and session storage cleared) and is done once the browser leaves `login.path`. Otherwise it throws with the form's alert text. Selectors in `login` fit most email and password forms; override them in `demo.config.json` for one that differs.
+- **Passwords** for real accounts come from a dotenv file (`passwordFile` + `passwordKey`), read at sign-in, quotes stripped, never printed. The file must be mode 600. A quoted value sent with its quotes, and the wrong one of two admin accounts, each cost a staging take a run of identical 401s.
+- **Preflight.** `run.sh` signs in headless as every account the script names before starting the display, so a bad sign-in fails in seconds. `DEMO_SKIP_PREFLIGHT=1` skips it.
+- **Read-only takes** (`readOnly()`) abort every non-GET request to the site's origin, outside `login`, and fail the take on any. Blocking beats watching: a stray click on a decision button changes nothing on shared data. Other origins (analytics, fonts) pass.
+- **Cuts behind a card.** A card is still once risen, so a cut while it is in front joins two identical frames. `chapter(n, { open })` and `login(name, { card })` do their slow work there.
+- **Overlapping cuts** (a sign-in before the cover, inside the lead-in) are merged by `finish.mjs`. Summed twice, they moved every caption about 4 s early.
+
 ## When a take fails
 
 The recorder saves `out/error.png` (the screen at the failure) and still finalizes `screen.mp4`, so the take up to the failure can be watched.

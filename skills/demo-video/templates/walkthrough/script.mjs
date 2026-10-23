@@ -6,18 +6,12 @@ const { record } = await import(`${process.env.DEMO_KIT}/recorder.mjs`);
 await record(import.meta.url, async (r) => {
     const page = r.page;
 
+    // Signing in is time the viewer gains nothing from: it is cut. The account
+    // is named in demo.config.json, and run.sh tries it before filming.
+    await r.login('student');
     await r.cover();
-    await r.chapter(1);
-
-    // Signing in is time the viewer gains nothing from: it is cut, and the
-    // video opens on the page the account lands on.
-    await r.offCamera(async (p) => {
-        await p.goto(new URL('/login', r.config.baseUrl).href);
-        await p.getByLabel('Email').fill('student@example.com');
-        await p.getByLabel('Password').fill('demo-password');
-        await p.getByRole('button', { name: 'Sign in' }).click();
-        await p.waitForURL(/\/courses/);
-    });
+    // The chapter's first page loads behind its card.
+    await r.chapter(1, { open: '/courses' });
     r.mark('catalogue');
     await r.hold(3000);
 

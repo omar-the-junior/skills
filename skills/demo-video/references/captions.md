@@ -13,7 +13,8 @@ A cut removes time the viewer gains nothing from: logins, seeding, waits for a b
 Cards are full-screen pages in the brand colours from `demo.config.json`, served in a tab of their own so the page underneath keeps its state.
 
 - `cover()` shows `video.json`'s cover with no animation: frame 0, the thumbnail. A clip may skip it, and then frame 0 is the page at the first mark, so mark only once that page is fully drawn.
-- `chapter(n)` shows "Part n of total" (the `labels.part` text), the chapter title and one line, for about 4.2 s.
+- `chapter(n)` shows "Part n of total" (the `labels.part` text), the chapter title and one line, for about 4.2 s. `chapter(n, { open })` loads the chapter's first page behind the drawn card and cuts the load, so a slow page never holds the card longer; without it, a `go` after the card loaded on camera and held the card 6 to 10 s.
+- A card ends the caption running before it as it comes up (a `quiet-before-<key>` mark).
 - Card text is new copy, so the person approves it like the captions.
 
 ## Caption text

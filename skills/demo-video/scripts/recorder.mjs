@@ -12,9 +12,9 @@
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.mjs';
-import { advise, findPlaywright } from './playwright.mjs';
+import { loadChromium, logIn } from './login.mjs';
 
 const W = 1280;
 const H = 720;
@@ -29,20 +29,6 @@ export function verify(name, ok, detail = '') {
     if (!ok) {
         throw new Error(`check failed: ${name} (${detail})`);
     }
-}
-
-/** Chromium from the Playwright findPlaywright picks (playwrightFrom, this folder, the kit, then one already on the machine). */
-async function loadChromium(videoDir, config) {
-    const pw = findPlaywright(videoDir, config);
-    if (!pw) {
-        throw new Error(`Playwright not found. Run scripts/doctor.sh in the videos folder; it prints what to install. ${advise(videoDir, config)}`);
-    }
-    const mod = await import(pathToFileURL(pw.entry).href);
-    const chromium = mod.chromium ?? mod.default?.chromium;
-    if (!chromium) {
-        throw new Error(`${pw.entry} has no chromium export.`);
-    }
-    return chromium;
 }
 
 /** A drawn pointer and click ripple: the filmed screen has no cursor of its own. */
@@ -238,6 +224,46 @@ export class Recorder {
         await this.toPage();
         await this.endCut(from);
     }
+    /**
+     * Signs in as an account from demo.config.json's `accounts`, off camera.
+     * With `card` ({ label, title, subtitle }), the sign-in runs behind that
+     * card, which names the account for the viewer (SKILL.md step 5).
+     */
+    async login(name, { card } = {}) {
+        this.loggingIn = true;
+        try {
+            if (card) {
+                await this.showCard(card, `quiet-account-${name}`, undefined, { behind: (p) => logIn(p, this.config, name) });
+                await this.toPage();
+            } else {
+                await this.offCamera((p) => logIn(p, this.config, name));
+            }
+        } finally {
+            this.loggingIn = false;
+        }
+    }
+    /**
+     * For takes on real data (staging, a copy of production): every request to
+     * the site (baseUrl's origin) other than GET, HEAD or OPTIONS is blocked
+     * before it leaves, and the take fails at the end if there was one. Sign-in
+     * through `login` is let through. `allow` lists URL parts or patterns for
+     * reads the site sends as POST (a search, a GraphQL query).
+     */
+    async readOnly({ allow = [] } = {}) {
+        const origin = new URL(this.config.baseUrl).origin;
+        this.writes = [];
+        await this.context.route('**/*', (route) => {
+            const request = route.request();
+            const url = request.url();
+            const read = ['GET', 'HEAD', 'OPTIONS'].includes(request.method());
+            const allowed = allow.some((p) => (typeof p === 'string' ? url.includes(p) : p.test(url)));
+            if (read || allowed || this.loggingIn || new URL(url).origin !== origin) {
+                return route.fallback();
+            }
+            this.writes.push(`${request.method()} ${url}`);
+            return route.abort('blockedbyclient');
+        });
+    }
 
     drawPointer(x, y) {
         return this.page.evaluate(([px, py]) => window.__demoPointerTo?.(px, py), [x, y]).catch(() => {});
@@ -395,8 +421,11 @@ export class Recorder {
      * Opens a URL (relative to baseUrl). On camera only for the first page of a
      * clip or a chapter's resume; every later page change is `navigate`.
      */
+    url(path) {
+        return /^[a-z]+:/.test(path) ? path : new URL(path, this.config.baseUrl).href;
+    }
     async go(url) {
-        await this.page.goto(/^[a-z]+:/.test(url) ? url : new URL(url, this.config.baseUrl).href);
+        await this.page.goto(this.url(url));
         await this.page.waitForLoadState('networkidle');
         await this.toPage();
     }
@@ -426,16 +455,30 @@ export class Recorder {
         await this.page.waitForTimeout(600);
     }
 
-    async showCard(card, key, holdMs = 3400) {
+    /**
+     * A full-screen card for `holdMs`. `behind(page)` runs on the page while the
+     * drawn card is in front, and its time is cut: the card is still, so the
+     * join cannot be seen, and the page is ready when the card leaves.
+     */
+    async showCard(card, key, holdMs = 3400, { behind } = {}) {
         this.context.__nextCard = cardPage(this.config, card);
         await this.cardPage.goto(`http://demo.invalid/__demo-card/${key}`);
         await this.cardPage.evaluate(() => document.fonts.ready);
+        // A caption running from the page ends as the card comes up, not once it has risen.
+        if (this.marks.length) {
+            this.mark(`quiet-before-${key}`);
+        }
         await this.cardPage.bringToFront();
         this.onCard = true;
         // An animated card is marked once it has risen, so no frame of the card
         // half-drawn opens a cue (or the video).
         await this.cardPage.waitForTimeout(card.animate ? 800 : 300);
         this.mark(key);
+        if (behind) {
+            const from = this.beginCut();
+            await behind(this.page);
+            await this.endCut(from);
+        }
         await this.cardPage.waitForTimeout(holdMs);
     }
     /**
@@ -450,11 +493,20 @@ export class Recorder {
      * Chapter card n from video.json's `chapters` ([{ title, subtitle }]). The
      * page underneath keeps its state; the next `go`, `navigate` or `offCamera`
      * brings it back, or call `toPage()` to return to it as it was.
+     * `open` (a URL, or a function given the page) loads the chapter's first
+     * page behind the card, so the card is not held while it loads, and the
+     * chapter opens on that page drawn.
      */
-    async chapter(n, holdMs = 3400) {
+    async chapter(n, options = {}) {
+        const { hold = 3400, open } = typeof options === 'number' ? { hold: options } : options;
         const chapters = this.video.chapters ?? [];
         const label = this.config.labels.part.replace('{n}', n).replace('{total}', chapters.length);
-        await this.showCard({ ...chapters[n - 1], label, animate: true }, `chapter-${n}`, holdMs);
+        const behind = typeof open === 'string' ? (p) => p.goto(this.url(open)) : open;
+        await this.showCard({ ...chapters[n - 1], label, animate: true }, `chapter-${n}`, hold, { behind });
+        if (open) {
+            await this.toPage();
+            await this.page.waitForTimeout(600);
+        }
     }
 
     /**
@@ -525,6 +577,9 @@ export async function record(scriptUrl, script) {
         await script(r);
         if (!r.marks.length) {
             throw new Error('the script set no mark, so the video would be empty');
+        }
+        if (r.writes) {
+            verify('the page sent no writes', r.writes.length === 0, r.writes.slice(0, 3).join(', '));
         }
     } catch (error) {
         failed = error;

@@ -5,5 +5,10 @@
   "font": { "file": null, "name": "Cairo" },
   "brand": { "background": "#111418", "text": "#f2f2f0", "muted": "#8a8a86", "accent": "#3b82f6" },
   "labels": { "part": "Part {n} of {total}" },
-  "playwrightFrom": null
+  "playwrightFrom": null,
+  "login": { "path": "/login" },
+  "accounts": {
+    "student": { "email": "student@example.com", "password": "demo-password" },
+    "staging-admin": { "email": "admin@staging.example", "passwordFile": "../.staging.env", "passwordKey": "STAGING_ADMIN_PASSWORD" }
+  }
 }
