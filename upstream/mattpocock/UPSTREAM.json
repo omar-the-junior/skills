@@ -1,0 +1,21 @@
+{
+  "repo": "https://github.com/mattpocock/skills.git",
+  "commit": "49dd158d1076134a641b33efb035946536778336",
+  "commitDate": "2026-10-09T11:56:49+01:00",
+  "license": "MIT",
+  "skills": {
+    "code-review": "skills/engineering/code-review",
+    "retro": "skills/engineering/retro",
+    "tdd": "skills/engineering/tdd",
+    "diagnosing-bugs": "skills/engineering/diagnosing-bugs",
+    "prototype": "skills/engineering/prototype",
+    "pr": "skills/engineering/pr",
+    "to-questionnaire": "skills/productivity/to-questionnaire",
+    "wizard": "skills/engineering/wizard",
+    "wait-what": "skills/productivity/wait-what",
+    "handoff": "skills/productivity/handoff",
+    "codebase-design": "skills/engineering/codebase-design",
+    "improve-codebase-architecture": "skills/engineering/improve-codebase-architecture",
+    "writing-for-agents": "skills/productivity/writing-for-agents"
+  }
+}
