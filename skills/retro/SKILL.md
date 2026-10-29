@@ -21,8 +21,9 @@ The user has asked for a **retrospective**. You are suggesting improvements to t
 - **Tool economy**: did the agent make expensive tool calls that could be streamlined? Is there any custom tooling (CLI's, MCP's) that is particularly token-inefficient? _Use when_ the agent made an expensive tool call.
 - **No-ops**: look for instructions in steering files that don't modify the agent's behavior. _Use when_ the steering files are large and unwieldy.
 - **Information access**: look for opportunities to increase the agent's access to information. Teeing dev server logs, readonly access to third-party services. _Use when_ a crucial piece of information was not available to the agent.
+- **Spec (ISA)**: did the session settle a requirement, a decision, or a term that never reached the ISA? Each one becomes a claim, a decision, or a § Language entry, so the next run and the Spec reviewer can see it. _Use when_ the repo or task has an ISA and the user corrected the agent, or the agent built something no claim covered.
 
-4. Present these candidates to the user, in order of severity.
+4. Present these candidates to the user, in order of severity. Give each one its **home**, the one file or check that will hold the fix: a repo check (linter rule, hook, CI job), `CODING_STANDARDS.md`, a navigation pointer in `CLAUDE.md`/`AGENTS.md`, the ISA, or, for a lesson about the agent system rather than this repo, the system's own rules (in LifeOS: the Learning Router's targets, such as `OPERATIONAL_RULES.md` or a skill's Gotchas). Change nothing until the user picks.
 
 ## Reference
 
@@ -42,3 +43,9 @@ You have access to several files in the repo:
 - `CODING_STANDARDS.md`: this file is read during review, not implementation. Add **navigation pointers** to docs folders if the standards file gets more than 1,000 lines long.
 - Docs: use docs as references files, pointed to by other files. Look for existing docs before writing new ones.
 - Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands. Follow the advice in the `writing-for-agents` skill.
+- `ISA.md`: what the system should be and why, as claims and decisions. The `code-review` Spec axis reads it, so a requirement missing here is invisible to review.
+
+## Gotchas
+
+- **Not every user turn in a Claude Code transcript is the user.** Session logs live at `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`. Hook output, skill bodies, subagent hand-backs and compaction summaries also arrive as user rows; a typed prompt is a user row whose `origin.kind` is `"human"`. Count corrections only from those, or the retro chases text no person wrote.
+- **This is not the LifeOS reflection.** A LifeOS run already writes its self-critique with `Reflect.ts`. The retro looks outward, at what the repo and its checks should change, so don't repeat the reflection here.

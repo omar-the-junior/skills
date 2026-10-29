@@ -10,7 +10,7 @@ Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
 Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
 
-The issue tracker should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+When the repo or task has an **ISA**, it is the spec: its claims are the requirements, its anti-claims what must not happen, its decisions what binds the build. An issue tracker is optional; use it only when commits reference issues.
 
 ## Process
 
@@ -26,7 +26,8 @@ Before going further, confirm the fixed point resolves (`git rev-parse <fixed-po
 
 Look for the originating spec, in this order:
 
-1. Issue references in the commit messages (`#123`, `Closes #45`, GitLab `!67`, etc.), fetched via the workflow in the tracker doc.
+0. An ISA: `ISA.md` at the repo root (a project ISA), or the task ISA the current run is working from (`MEMORY/WORK/<slug>/ISA.md` in LifeOS). Name the section or claim IDs the diff serves; pass the path plus those IDs, not a summary.
+1. Issue references in the commit messages (`#123`, `Closes #45`, GitLab `!67`, etc.), fetched with the repo's tracker CLI (`gh issue view`).
 2. A path the user passed as an argument.
 3. A spec file under `docs/`, `specs/`, or `.scratch/` matching the branch name or feature.
 4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".
@@ -57,7 +58,7 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn both sub-agents in parallel
 
-Issue both sub-agent calls together, in the foreground, and aggregate the reports they return.
+Issue both sub-agent calls together, in the foreground, and aggregate the reports they return. Dispatch them as `subagent_type: "standards-reviewer"` and `subagent_type: "spec-reviewer"`: those agents are read-only and pinned to a strong model, so the review neither edits the code nor runs on a weak session default. Never as a fork: a fork inherits the build context and defends its own code. If either agent type is missing, fall back to `general-purpose` with the same prompt and say so in the report.
 
 **Standards sub-agent prompt** should include:
 
@@ -87,3 +88,9 @@ A change can pass one axis and fail the other:
 - Code that does exactly what the issue asked but breaks the project's conventions → **Spec pass, Standards fail.**
 
 Reporting them separately stops one axis from masking the other.
+
+## Gotchas
+
+- **The ISA is the spec, and a missing one is not "no spec".** In a repo with `ISA.md`, the Spec axis reads the claims the diff serves. Before 2026-10-29 this skill searched only issues and `docs/`, so every ISA-based review depended on the caller remembering to pass it.
+- **Close-out commits often touch the ISA itself.** Tell the Spec reviewer which ISA edits are in the diff (claims ticked, decisions added), so it checks that each tick has evidence rather than reading the edit as the requirement.
+- **Some repos keep path rules beside the standards file** (`.claude/rules/*.md`, a "before you touch" table). List them as standards sources for the files the diff changes.
