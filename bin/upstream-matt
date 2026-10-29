@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# Compare Matt Pocock's upstream skills with our forks, and optionally move the vendor branch.
+#
+#   bin/upstream-matt [ref]          report only (default ref: upstream's default branch)
+#   bin/upstream-matt [ref] --apply  also commit the new upstream copies to upstream/matt
+#
+# Layout: branch upstream/matt holds pristine copies of the skills we keep, at the commit named in
+# upstream/mattpocock/UPSTREAM.json. main holds our versions at the same paths. After --apply, run
+# `git merge upstream/matt` on main: git's three-way merge keeps our edits, takes his, and stops
+# only where both sides changed the same lines. This script never touches main.
+set -euo pipefail
+
+BRANCH=upstream/matt
+RECORD=upstream/mattpocock/UPSTREAM.json
+REPO_ROOT=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
+CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/skills-upstream/mattpocock
+
+ref="" apply=0
+for a in "$@"; do
+  case $a in
+    --apply) apply=1 ;;
+    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    *) ref=$a ;;
+  esac
+done
+
+cd "$REPO_ROOT"
+record=$(git show "$BRANCH:$RECORD")
+url=$(jq -r .repo <<<"$record")
+base=$(jq -r .commit <<<"$record")
+mapfile -t names < <(jq -r '.skills | keys[]' <<<"$record")
+
+if [ -d "$CACHE/.git" ]; then git -C "$CACHE" fetch -q origin; else git clone -q "$url" "$CACHE"; fi
+new=$(git -C "$CACHE" rev-parse "${ref:-origin/HEAD}^{commit}")
+
+echo "upstream: $url"
+echo "base:     ${base:0:7}  $(git -C "$CACHE" log -1 --format='%cs %s' "$base")"
+echo "new:      ${new:0:7}  $(git -C "$CACHE" log -1 --format='%cs %s' "$new")"
+if [ "$new" = "$base" ]; then echo "Up to date."; exit 0; fi
+echo
+
+moved=()
+printf '%-30s %-28s %s\n' SKILL "HIS CHANGES (base..new)" "OURS (base..main)"
+for n in "${names[@]}"; do
+  path=$(jq -r --arg n "$n" '.skills[$n]' <<<"$record")
+  if ! git -C "$CACHE" cat-file -e "$new:$path" 2>/dev/null; then
+    found=$(git -C "$CACHE" ls-tree -d -r --name-only "$new" | grep -E "(^|/)$n$" || true)
+    printf '%-30s %s\n' "$n" "GONE from $path${found:+, now at $found}"
+    moved+=("$n")
+    continue
+  fi
+  his=$(git -C "$CACHE" diff --shortstat "$base" "$new" -- "$path" | sed 's/ changed//;s/^ //')
+  ours=$(git diff --shortstat "$BRANCH" main -- "skills/$n" | sed 's/ changed//;s/^ //')
+  printf '%-30s %-28s %s\n' "$n" "${his:-none}" "${ours:-none}"
+done
+
+echo
+echo "Skills he added since base (not tracked, for awareness):"
+comm -13 \
+  <(git -C "$CACHE" ls-tree -d -r --name-only "$base" -- skills | awk -F/ 'NF==3{print $3}' | sort -u) \
+  <(git -C "$CACHE" ls-tree -d -r --name-only "$new" -- skills | awk -F/ 'NF==3{print $3}' | sort -u) \
+  | sed 's/^/  /' || true
+
+echo
+echo "His commits touching tracked skills:"
+paths=$(jq -r '.skills[]' <<<"$record")
+# shellcheck disable=SC2086
+git -C "$CACHE" log --format='  %h %cs %s' "$base..$new" -- $paths
+
+if [ $apply -eq 0 ]; then
+  echo
+  echo "Read one skill's change:  git -C $CACHE diff ${base:0:7} ${new:0:7} -- <path>"
+  echo "Then:  bin/upstream-matt ${ref:-} --apply   (moves $BRANCH only)"
+  exit 0
+fi
+
+if [ ${#moved[@]} -gt 0 ]; then
+  echo "Refusing --apply: moved or deleted upstream: ${moved[*]}. Update $RECORD by hand first." >&2
+  exit 1
+fi
+
+wt=$(mktemp -d)
+trap 'git worktree remove --force "$wt" >/dev/null 2>&1 || true' EXIT
+git worktree add -q "$wt" "$BRANCH"
+for n in "${names[@]}"; do
+  path=$(jq -r --arg n "$n" '.skills[$n]' <<<"$record")
+  rm -rf "$wt/skills/$n"
+  mkdir -p "$wt/skills/$n"
+  git -C "$CACHE" archive "$new" "$path" | tar -x -C "$wt/skills/$n" --strip-components="$(awk -F/ '{print NF}' <<<"$path")"
+done
+git -C "$CACHE" show "$new:LICENSE" > "$wt/upstream/mattpocock/LICENSE"
+jq --arg c "$new" --arg d "$(git -C "$CACHE" log -1 --format=%cI "$new")" '.commit=$c | .commitDate=$d' \
+  <<<"$record" > "$wt/$RECORD"
+git -C "$wt" add -A
+git -C "$wt" commit -q -m "upstream: mattpocock/skills@${new:0:7}"
+echo
+echo "$BRANCH moved ${base:0:7} -> ${new:0:7}. main is unchanged."
+echo "See his changes:  git diff ${BRANCH}~1 $BRANCH"
+echo "Merge them:       git merge $BRANCH     (undo before merging: git branch -f $BRANCH ${BRANCH}~1)"
