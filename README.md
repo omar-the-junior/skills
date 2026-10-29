@@ -6,6 +6,16 @@ Agent skills by Omar Masoud, in the open [Agent Skills](https://agentskills.io) 
 |---|---|
 | [demo-video](skills/demo-video/SKILL.md) | Records a scripted screen video of a website or web app: a short clip of one feature for a release, or a chaptered walkthrough. Real browser, drawn pointer, zooms, cover, chapter cards, burned-in captions (right-to-left included), checked frame by frame. |
 
+### Forked from Matt Pocock
+
+Thirteen skills come from [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, see `upstream/mattpocock/LICENSE`). Four are changed for work tracked in an ISA (Ideal State Artifact, the spec format of [LifeOS](https://github.com/danielmiessler/LifeOS)):
+
+- `code-review` reads the ISA as its spec and sends the two halves of the review to the `spec-reviewer` and `standards-reviewer` agents in `agents/`.
+- `retro` gives every finding a home: a repo check, `CODING_STANDARDS.md`, a pointer, the ISA, or the agent system's own rules.
+- `improve-codebase-architecture` and `wait-what` use the ISA's glossary and decisions.
+
+The other nine are his, unchanged: `codebase-design`, `diagnosing-bugs`, `handoff`, `pr`, `prototype`, `tdd`, `to-questionnaire`, `wizard`, `writing-for-agents`. Branch `upstream/matt` holds his copies at the commit in `upstream/mattpocock/UPSTREAM.json`; `bin/upstream-matt` shows what he changed since then and what we changed, and `git merge upstream/matt` brings his changes in.
+
 ## Install
 
 Pick one. All three get the same skill.
@@ -36,20 +46,6 @@ ln -s ~/skills/skills/demo-video ~/.agents/skills/demo-video    # agents that re
 ```
 
 `git pull` in the clone updates it.
-
-### While the repository is private
-
-All three ways work for anyone added as a collaborator on GitHub, once git on their machine can clone the repository without asking for a password. The simplest setup:
-
-```bash
-gh auth login        # GitHub CLI, signed in as the invited account
-gh auth setup-git    # lets plain git use that sign-in
-git ls-remote https://github.com/omar-the-junior/skills.git    # prints a line when access works
-```
-
-An SSH key loaded in `ssh-agent` works too. The installers run git without prompts, so a credential that would have to be typed in fails. For skills.sh, exporting `GITHUB_TOKEN` also works; Claude Code ignores that variable unless a credential helper (such as `gh`'s) reads it.
-
-Anyone not added gets "repository not found". Once the repository is public, none of this is needed.
 
 ## demo-video requirements
 
