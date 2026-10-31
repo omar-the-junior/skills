@@ -132,6 +132,46 @@ ask_secret() {
   if (( rc )) && [[ -z "$input" ]]; then return 1; fi
   [[ -z "$input" && -n "$current" ]] && input="$current"
   printf -v "$key" '%s' "$input"
+  [[ -n "$input" ]] && _SECRET_VALUES+=("$input")
+  return 0
+}
+
+# Evidence log. Set WIZARD_LOG to a file path in the stages section to turn it
+# on. `run CMD...` runs a command, shows its output, and appends the command,
+# the output and the exit code to the log; the output also stays in
+# $WIZARD_LAST for the stage to read. `logline TEXT` appends one line. Both
+# write through _redact: the log holds each command after the shell expanded
+# it, so `GH_TOKEN="$(gh auth token)"` would otherwise put the token in it.
+# _redact masks every value read by ask_secret and the common token shapes.
+WIZARD_LOG="${WIZARD_LOG:-}"
+WIZARD_LAST="$(mktemp)"
+_SECRET_VALUES=()
+trap 'rm -f "$WIZARD_LAST"' EXIT
+
+_redact() {
+  local line v
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    for v in ${_SECRET_VALUES[@]+"${_SECRET_VALUES[@]}"}; do line=${line//"$v"/[REDACTED]}; done
+    printf '%s\n' "$line"
+  done | sed -E \
+    -e 's/(gh[opusr]_|github_pat_)[A-Za-z0-9_]{20,}/\1[REDACTED]/g' \
+    -e 's/(sk-|sk_live_|sk_test_|rk_live_)[A-Za-z0-9_-]{16,}/\1[REDACTED]/g' \
+    -e 's/(AKIA|ASIA)[A-Z0-9]{16}/\1[REDACTED]/g' \
+    -e 's/(xox[abprs]-)[A-Za-z0-9-]{10,}/\1[REDACTED]/g' \
+    -e 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/[REDACTED-JWT]/g' \
+    -e 's#(://[^:/@ ]+:)[^@ ]+@#\1[REDACTED]@#g' \
+    -e 's/((TOKEN|SECRET|PASSWORD|PASSWD|API_KEY)=)[^ ]+/\1[REDACTED]/g'
+}
+
+logline() { [[ -z "$WIZARD_LOG" ]] || printf '%s\n' "$@" | _redact >> "$WIZARD_LOG"; }
+
+run() {
+  local rc
+  logline "" "\$ $*"
+  set +e; "$@" 2>&1 | tee "$WIZARD_LAST"; rc=${PIPESTATUS[0]}; set -e
+  if [[ -n "$WIZARD_LOG" ]]; then _redact < "$WIZARD_LAST" >> "$WIZARD_LOG"; fi
+  logline "[exit $rc]"
+  return "$rc"
 }
 
 # write_env KEY VALUE upserts KEY='VALUE' into ENV_FILE (replaces any existing

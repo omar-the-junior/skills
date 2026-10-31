@@ -34,6 +34,8 @@ For each stage, write the precise path a human follows: which URL to open, what 
 
 Copy `template.sh` to the target path. Replace the example stage with one `stage` per step, in dependency order. Use the library helpers: `stage`, `say`/`step`, `open_url`, `ask`/`ask_secret`, `write_env`, `set_secret`/`set_var`, `pause`/`confirm`. Set `TOTAL_STAGES` to the number of stages you wrote.
 
+When the wizard runs commands (a server change, a migration, a deploy), set `WIZARD_LOG` to an evidence file and run each command through `run`, which logs the command, its output and its exit code and leaves the output in `$WIZARD_LAST` for the stage to check. The log masks secrets on its way to disk, so never write your own logger beside it: the log records each command after the shell expanded it, and a hand-rolled one once wrote a `$(gh auth token)` straight into an evidence file.
+
 Hold the bar the template sets: open the URL before asking for its value, use `ask_secret` for anything secret, `write_env` every persisted value, `set_secret` only the values CI actually needs, and `confirm` before any irreversible action. Each `stage` clears the screen so only the current step is visible: keep a stage to one focused task so nothing the human needs scrolls away. Don't touch the library above the marker.
 
 ### 4. Verify and hand off
